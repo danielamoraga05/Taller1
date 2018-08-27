@@ -1,0 +1,88 @@
+---
+title: "Taller1: Exploracion de datos de la diversidad de especies de los Parques de Madrid"
+author: "Daniela Moraga"
+date: "23 de agosto de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduccion
+
+Dentro de la riqueza de especies para las aves, los Passeriformes corresponen al  con la mayor diversidad de especies. Comúnmente se conocern como aves canoras o pajaros cantores(Mayr, 1946). 
+
+
+Con relacion a la diversidad de especies, Los mecanismos que determinan los patrones geograficos en la biodiversidad permanecen pobremente sin conocer. Sin embargo, se podria explicar la riqueza de especies mediante un balance de especies a nivel regional, y las interacciones locales de especies. Dada primeramente por la competencia de recursos (Ricklefs, 2012). 
+
+
+Los siguientes graficas  corresponden a una base de datos de la biodiversidad de especies reportadas para los parques de Madrid con relación a su Calidad de Aire. 
+
+Referencias bibliograficas
+
+Mayr, E. 1946. "The Number of Species of Birds", The Auk, Volumen 63, número 1. p.67.
+
+Ricklefs, R. 2012. "Species richness and morphological diversity of passerine birds"
+Proceedings of the National Academy of Sciences of the United States of America. 
+
+
+```{r cars}
+library(tidyverse)
+library(knitr)
+library(stargazer)
+library(dplyr)
+library(devtools)
+library(rmarkdown)
+library(knitr)
+library(stargazer)
+library(data.table)
+library(ggplot2)
+
+species <- read.csv("C:/Users/Daniela Moraga/Desktop/Taller/species.csv")
+parks <- read.csv("C:/Users/Daniela Moraga/Desktop/Taller/parks.csv")
+colnames(species) <- c("Park", "ParkName", "Order", "Family", "ScientificName", "CommonNames",
+                                "RecordStatus", "Occurrence", "Nativeness", "Abundance", "Seasonality", "Conservationstatus", "x14", "x15") 
+colnames(parks) <- c("Parkcode", "ParkName", "State","Acres", "Latitude", "Longitude") 
+#Mirar las especies en comparacion con la latitud.. y luego resumir en una tabla 
+data <- select(species,Occurrence,Park,CommonNames, ParkName) 
+data1 <- select(parks,ParkName,Latitude,Longitude) %>% filter(!is.na(Latitude)) %>% filter(!is.na(Longitude))
+#quitar primero los que no tienen latitude y Longitud= na
+data2<- data %>% full_join(data1)
+data3<- data2 %>% group_by(ParkName, CommonNames,ParkName,Latitude) %>% filter(!is.na(Occurrence))%>% 
+        filter(Occurrence == "Approved")%>% group_by(Latitude) %>% summarise(Riqueza=n())
+
+
+#Ahora solo para el grupo de los Passeriformes 
+d1 <- select(species,Occurrence,Park,Family,ParkName) %>% filter(Family == "Passeriformes")
+d2 <- select(parks,ParkName,Latitude,Longitude) %>% filter(!is.na(Latitude)) %>% filter(!is.na(Longitude))
+#quitar primero los que no tienen latitude y Longitud= na
+d2<- d2 %>% full_join(d1)
+
+#as.numeric(latitude)
+d3<- d2 %>% group_by(ParkName, Family,ParkName,Latitude) %>% filter(!is.na(Occurrence))%>% 
+filter(Occurrence == "Approved") %>% group_by(Latitude)%>% summarise(Riqueza=n())
+
+
+```
+## Including Plots
+
+A continuacion se observa la grafica 1. Que corresponde a una regresion entre los valores de riqueza de especies con respecto a la latitud. 
+
+```{r pressure, echo=FALSE}
+
+ggplot(data3, aes(Latitude, Riqueza)) + 
+  geom_point(aes(color =Latitude))+ geom_jitter(aes(color =Latitude))
+```
+## Including Plots
+
+Grafic 2. Observacion de los valores de riqueza de especies solo para la Familia de los Passeriformes a lo largo de la latitud. 
+
+```{r, echo=FALSE}
+
+ggplot(d3, aes(Latitude, Riqueza)) + 
+  geom_point(aes(color =Latitude))+ geom_jitter(aes(color =Latitude))
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
